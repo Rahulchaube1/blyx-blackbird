@@ -1,0 +1,16 @@
+use vendor::blackbird::blackbird;
+
+fn main() {
+    let local = 11000.0;
+    let transition = 10000.0;
+    let before = 3600.0;
+    let after = 0.0;
+    let fold = 1.0;
+    let result = blackbird_resolve(local, transition, before, after, fold);
+    if len(result) == 0 { println!("invalid"); return; }
+    let mut i = 0;
+    while i < len(result) {
+        println!(at(result, i));
+        i += 1;
+    }
+}
