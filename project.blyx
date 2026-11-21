@@ -1,0 +1,32 @@
+use std::cli;
+use console;
+use blackbird;
+
+fn main() {
+    let argv = cli_args();
+    let count = args_len(argv);
+    if count == 1 && args_at(argv, 0) == "--help" {
+        println!("Resolve a wall-clock timestamp at a known gap or fold without guessing its offset.");
+        println!("Usage: blackbird local transition before after fold");
+        println!("Vector arguments are comma-separated; use [] for an empty vector.");
+        return;
+    }
+    let mut result = [];
+    if count == 0 {
+        result = blackbird_resolve(11000.0, 10000.0, 3600.0, 0.0, 1.0);
+    } else {
+        if count != 5 { stderr_line("Wrong argument count. Use --help."); process_exit(2); }
+        let local = console_value(args_at(argv, 0));
+        let transition = console_value(args_at(argv, 1));
+        let before = console_value(args_at(argv, 2));
+        let after = console_value(args_at(argv, 3));
+        let fold = console_value(args_at(argv, 4));
+        result = blackbird_resolve(local, transition, before, after, fold);
+    }
+    if len(result) == 0 { stderr_line("Invalid input for Blackbird. See the package input contract."); process_exit(1); }
+    let mut i = 0;
+    while i < len(result) {
+        println!(at(result, i));
+        i += 1;
+    }
+}

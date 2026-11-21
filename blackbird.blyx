@@ -1,0 +1,50 @@
+use civiloffset;
+use clockfold;
+
+fn blackbird_finite(values: vector) -> bool {
+    let mut i = 0;
+    while i < len(values) {
+        let value = at(values, i);
+        if !(value - value == 0.0) {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
+fn blackbird_compute(local: f64, transition: f64, before: f64, after: f64, fold: f64) -> vector {
+    if fold > 1.0 {
+        return [];
+    }
+    let c = clockfold_classify(local, transition, before, after);
+    if len(c) == 0 {
+        return [];
+    }
+    if at(c, 0) == 0.0 {
+        return [0, 0, 0];
+    }
+    let mut utc = at(c, 1);
+    if fold == 1.0 {
+        utc = at(c, 2);
+    }
+    let offset = local - utc;
+    let point = civiloffset_candidate(local, offset);
+    if len(point) == 0 {
+        return [];
+    }
+    [at(c, 0), at(point, 0), at(point, 1)]
+}
+
+// Resolve a wall-clock timestamp at a known gap or fold without guessing its offset.
+// Returns [candidate count, selected UTC, selected offset]. For a gap the latter two values are zero. Fold 0 chooses the earlier occurrence and fold 1 the later. Supply transition data from a trusted timezone database.
+pub fn blackbird_resolve(local: f64, transition: f64, before: f64, after: f64, fold: f64) -> vector {
+    if !(local >= -9007199254740991.0 && local <= 9007199254740991.0 && local % 1.0 == 0.0) { return []; }
+    if !(transition >= -9007199254740991.0 && transition <= 9007199254740991.0 && transition % 1.0 == 0.0) { return []; }
+    if !(before >= -9007199254740991.0 && before <= 9007199254740991.0 && before % 1.0 == 0.0) { return []; }
+    if !(after >= -9007199254740991.0 && after <= 9007199254740991.0 && after % 1.0 == 0.0) { return []; }
+    if !(fold >= 0.0 && fold <= 9007199254740991.0 && fold % 1.0 == 0.0) { return []; }
+    let result = blackbird_compute(local, transition, before, after, fold);
+    if !blackbird_finite(result) { return []; }
+    result
+}
